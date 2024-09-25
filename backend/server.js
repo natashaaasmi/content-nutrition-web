@@ -1,9 +1,21 @@
+require('dotenv').config();
+// console.log("Process env", process.env);
+// console.log("Twitter bearer token: ", process.env.TWITTER_BEARER_TOKEN);
 const express = require('express');
 const OpenAI = require('openai');
+const cors = require('cors');
 const { TwitterApi } = require('twitter-api-v2');
 
 
+
+
 const app = express();
+
+app.use(cors());
+app.options('*', cors());
+
+app.use(express.json());
+
 const port = 3007;
 
 const openai = new OpenAI('your-openai-api-key');
@@ -47,20 +59,26 @@ app.post('/generate', async (req, res) => {
 
 app.post('/get_user_timeline', async (req, res)=>{
   console.log("Received request to get user timeline");
+  const { userId } = req.body;
+  console.log("User ID: ", userId);
+  if (!userId) {
+    res.status(400).json({ error: 'Missing required parameter "userId"' });
+    return;
+  }
   try {
-    console.log("Entered try")
+    console.log("Bearer token", process.env.TWITTER_BEARER_TOKEN);
+    if (!process.env.TWITTER_BEARER_TOKEN) {
+      throw new Error('Twitter bearer token not found');
+    }
     const twitterClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
-    console.log("Twitter client created")
-
     const readOnlyClient = twitterClient.readOnly;
-    console.log("ReadOnly client created")
-    const tweets = await readOnlyClient.v2.userTimeline('12', { exclude: 'replies' });
-    //classify tweets here
-    console.log("Tweets found"  , tweets);
-    res.json({tweets: tweets});
-    console.log("Tweets found: ", tweets);
+    const userResponse = await readOnlyClient.v2.userByUsername(userId);  
+    const id = userResponse.data.id;
+    const tweets = await readOnlyClient.v2.userTimeline(`${id}`, { exclude: 'replies' });
+    console.log("Tweets found: ", tweets.data.tweets);
   }
   catch (error) {
+    console.log("Error getting user timeline: ", error);
     res.status(500).json({ error: error.message });
   }
 })

@@ -4,6 +4,7 @@ function TwitterHTMLParser(aHTMLString){
     
     const doc = parser.parseFromString(aHTMLString, "text/html");
     doc.style="background-color: red;"
+    // checkAvatarHover()
     // injectCSS2(document.getElementById("react-root"))
     var reactRoot = doc.getElementById("react-root");
     console.log("Second: ", second)
@@ -41,11 +42,6 @@ function TwitterHTMLParser(aHTMLString){
     // injectCSS2(postList, "purple")
     console.log("Num tweets: ", postList.childNodes.length) 
 
-    // console.log("Post list by query 1, ", postListByQuery.firstChild)
-    // console.log("Post list by query 1.5", postListByQuery.firstChild.firstChild)
-    // console.log("Post list by query 2, ", postListByQuery.firstChild.childNodes)
-    // console.log("Post list by query 3, ", postListByQuery.firstChild.childNodes[0])
-
     console.log("Num tweets found from query: ", postListByQuery.firstChild.childNodes.length)
 
     postListByQuery.childNodes.forEach(post => {
@@ -53,20 +49,22 @@ function TwitterHTMLParser(aHTMLString){
             console.log("Post list entered")
             console.log("Post found: ", post)
             let testTweet = post.querySelector('[data-testid="tweet"]')
+            
             console.log("Test tweet: ", testTweet)
             // let tweet = getTweet(post)
             // injectCSS2(tweet, "red")
+            
             let userLine = getUserLineFromTweet(testTweet)
+            console.log("User line: ", userLine)
             // await llm here
-            getLLMLabel(testTweet)
+            let tweetText = testTweet.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
+            getLLMLabel(tweetText)
             .then((foundText)=>{
-                // responseListener()
-                // .then((response)=>{
-                // console.log("Resposne from background: ", response)
+                
                 injectNewElement(userLine, foundText)
-                // })
                 
             })
+            getUserProfileDiv(testTweet)
             
 
             // injectCSS2(userLine, "blue")
@@ -82,32 +80,6 @@ function TwitterHTMLParser(aHTMLString){
 
     console.log("Post list? ", postList)
     return postListByQuery
-}
-
-
-
-async function responseListener(){
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {   
-        if (request.message === "Label generated"){
-            console.log("Label generated request: ", request)
-            console.log("Label generated: ", request.label)
-            return request.label
-        }
-        else if (request.message === "Error generating label"){
-            console.log("Error generating label")
-            return "Error generating label"
-        }
-    });
-    
-}
-
-function createPort(){
-    var port = chrome.runtime.connect({name:"llm-port"});
-    //do below when tweet text is found
-    port.postMessage({message:"Connected to port"})
-    port.onMessage.addListener((msg)=>{
-        console.log("Message from port: ", msg)
-    })
 }
 
 function sendMessageToBackground(message) {
@@ -126,16 +98,12 @@ function sendMessageToBackground(message) {
 
 
 async function getLLMLabel(tweet){
-    console.log("Got here")
     try {
-        console.log("In try block")
-        var tweetText =tweet.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
-        // console.log("Tweet text: ", tweetText)
-        // console.log("Tweet 2", tweetText.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent)
-        if (tweetText){
-            console.log("Tweet text: ", tweetText)
-            const response = await sendMessageToBackground({ message: "generate", input: tweetText });
-            console.log("Response from background: ", response)
+        // var tweetText =tweet.childNodes[0].childNodes[0].childNodes[1].childNodes[1].childNodes[1].textContent
+        if (tweet){
+            console.log("Tweet text: ", tweet)
+            const response = await sendMessageToBackground({ message: "generate", input: tweet });
+            // console.log("Response from background: ", response)
             if (response.message === "Label generated"){
                 console.log("Label found: ", response.label)
                 const label = JSON.parse(response.label)
@@ -148,10 +116,9 @@ async function getLLMLabel(tweet){
         console.log("Error getting LLM label: ", error)
         return ("Error found")
     }
-
 }
 
-// post has type document
+// functions for parsing tweet base
 function getTweet(post){
     // 5 -> childNodes[1] -> childNodes[1] -> childNodes[1]
     console.log("tweet 1; ", post.firstElementChild)
@@ -159,7 +126,6 @@ function getTweet(post){
     console.log("tweet 3; ", post.firstElementChild.firstElementChild.firstElementChild)
     console.log("tweet 4; ", post.firstElementChild.firstElementChild.firstElementChild.firstElementChild)
     console.log("tweet 5; ", post.firstElementChild.firstElementChild.firstElementChild.firstElementChild.childNodes[1])
-
     var tweet = post.firstElementChild.firstElementChild.firstElementChild.firstElementChild.firstElementChild
     try {
         var tweet_2= post.firstElementChild.firstElementChild.firstElementChild.firstElementChild.childNodes[1]
@@ -202,6 +168,74 @@ function getTweetText(tweet){
     //childNodes[1]
     var tweetText = tweet.childNodes[1].childNodes[1].childNodes[1].firstElementChild.firstElementChild
     console.log("Tweet text: ", tweetText.textContent)
+}
+
+//functions for parsing user hover div from timeline
+function getUserProfileDiv(tweet){
+    console.log("Entered user profile div")
+    try {
+        console.log("Entered userprofilediv")
+        var secondChild = tweet.firstChild.firstChild
+        console.log("Second child", secondChild)
+        var next = secondChild.childNodes[1]
+        console.log("Next", next)
+        var userProfileDiv= next.firstChild.firstChild
+        console.log("User profile div", userProfileDiv)
+        var inserted = ''
+        userProfileDiv.addEventListener('mouseover', (event)=>{
+            console.log("User profile div hovered", userProfileDiv)
+            // inserted = getLinkFromUserProfile(userProfileDiv)
+        });
+        userProfileDiv.addEventListener('mouseout', (event)=>{
+            console.log("mouse out")
+            // var el = document.getElementsByClassName="user-nutrition-div"
+            // el.forEach((element)=>{
+            //     element.style.display="none"
+            // })
+        })
+    }
+    catch (error) {
+        console.log("Error getting user profile div", error)
+    }
+}
+
+function getLinkFromUserProfile(userProfileDiv){
+    try {
+        var link = userProfileDiv.childNodes[0].childNodes[0].childNodes[0].childNodes[1].childNodes[0].childNodes[1].firstChild.firstChild.href
+        console.log("Link: ", link)
+        // 
+        console.log("Found user profile div", userProfileDiv)
+        insertUserNutritionDiv(userProfileDiv.childNodes[0])
+        // link.addEventListener('mouseover', (event) => {
+        //     console.log("Link hovered", link)
+        // })
+
+    }
+    catch (error) {
+        console.log("Error getting link from user profile div", error)
+    }
+}
+
+function insertUserNutritionDiv(parentContainer){
+    console.log("Type of parent container", typeof(parentContainer.parentNode))
+    const el = parentContainer.parentNode
+    console.log("Entered insert user nutrition div")
+    if (!el.classList.contains('user-nutrition-div')){
+        var container = document.createElement("div")
+        container.style.backgroundColor = "gray"
+        container.className= "user-nutrition-div"
+        container.style.borderRadius = "20px"
+        container.style.border = "1px solid lightgray"
+        container.style.height = "150px"
+        container.style.width = "100px"
+        container.style.position = "fixed"
+        container.style.marginLeft= "10px"
+        container.innerHTML = "inserted container"
+        console.log("Container created", container)
+        console.log("Parent container: ", el)
+        el.classList.add('user-nutrition-div')
+        el.appendChild(container)
+    }
 }
 
 function parseHTML(aHTMLString){
@@ -270,36 +304,8 @@ function injectNewElement(el, textInput){
         
         el.classList.add('css-injected');
         el.appendChild(newElement);
-        el.appendChild(newElement);
         }
 }
-
-
-// const parsedResults = parseHTML(document.body.innerHTML)
-// console.log(parsedResults)
-
-// setTimeout(() => {
-    // var start = Date.now();
-    // console.log("Waited for 4 seconds");
-    // const target = TwitterHTMLParser(document.body.innerHTML);
-
-    // parseHTML()
-    // TwitterHTMLParser(document.body.innerHTML);
-
-    // var observer = new MutationObserver(function(mutations){
-    //     var init = Date.now() - start;
-    //     console.log("Adding mutations to psot list at time: ", init, "ms")
-    //     mutations.forEach(function(mutation){
-    //         console.log("Mutation: ", mutation.type)
-    //         console.log("New mutation of type", mutation.type, " at time: ", init, "with added nodes", mutation.addedNodes.length)
-    //         console.log("Added node: ", mutation.addedNodes[0])
-    //         TwitterHTMLParser(document.body.innerHTML);
-    //     })
-    // })
-    // var config = {attributes:true, childList:true, characterData:true}
-    // observer.observe(target, config)
-// }, 4000);
-  
 function getPostList(){
     var parser = new DOMParser();
     const main = document.querySelector('[role="main"]').querySelector('[aria-label="Home timeline"]');
@@ -308,39 +314,88 @@ function getPostList(){
     return postList
 }
 
-function observeDOMForPopup(){
-    const observer = new MutationObserver((mutations)=>{
-        mutations.forEach((mutation)=>{
-            if (mutation.type === "childList"){
-                mutation.addedNodes.forEach((node)=>{
-                    if (node.nodeType === 1) { // Only process element nodes
-                        const avatarDiv = node.querySelector('div[data-testid="Tweet-User-Avatar"]');
-                        if (avatarDiv) {
-                          console.log('Avatar found in newly added node:', avatarDiv);
-                        }
-                      }
-                    // if (node.classList && node.classList.contains(""))
-                    // console.log("Node added: ", node)
-                })
-            }
-        })
+function insertCustomDivNextToElement(targetElement) {
+
+    var customDiv = document.createElement("div");
+    customDiv.style.backgroundColor = "black";
+    customDiv.style.border = "1px solid lightgray";
+    customDiv.style.height = "100px";
+    customDiv.style.width = "200px";
+    customDiv.style.borderRadius = "10px";
+    customDiv.style.position = "absolute";
+    customDiv.style.innerHTML = "Loading nutrition facts for this user";
+    customDiv.id="tweets-container";
+
+    var deleteDiv = document.createElement("div")
+    deleteDiv.innerHTML = "x"
+    deleteDiv.style.color = "white"
+    deleteDiv.style.position = "absolute"
+    deleteDiv.style.top = "6px"
+    deleteDiv.style.right = "6px"
+    deleteDiv.style.fontSize="11px"
+    deleteDiv.style.fontFamily = "Arial"
+    deleteDiv.style.cursor = "pointer"
+    deleteDiv.addEventListener('click', (event)=>{
+        console.log("Delete div clicked")
+        removeCustomDiv();
     })
+    
+    customDiv.className="custom-div"
+    var titleText = document.createElement("div")
+    
+    titleText.innerHTML = "Content nutrition"
+    titleText.style.fontWidth = "bold"
+    titleText.style.color = "white"
+    titleText.style.textAlign = "center"
+    titleText.style.padding = "10px"
+    titleText.style.fontFamily = "Arial"
+    customDiv.appendChild(deleteDiv)
+    customDiv.appendChild(titleText)
+
+    const rect = targetElement.getBoundingClientRect();
+    customDiv.style.top = `${rect.top + window.scrollY + 40 }px`; 
+    customDiv.style.left = `${rect.right + 10 + window.scrollX}px`; 
+    document.body.appendChild(customDiv);
 }
-// const postList = getPostList()
 
+function removeCustomDiv() {
+    const customDiv = document.querySelectorAll('.custom-div');
+    if (customDiv) {
+        customDiv.forEach((div) => {
+            div.style.display = "none";
+        });
+    }
+}
 
-// const handleMutations = (mutationsList, observer) => {
-//     for (const mutation of mutationsList) {
-//         if (mutation.type === 'childList') {
-//             console.log('A child node has been added or removed.');
-//             TwitterHTMLParser(document.body.innerHTML);
-//         } else if (mutation.type === 'attributes') {
-//             console.log(`The ${mutation.attributeName} attribute was modified.`);
-//         }
-//     }
-// };
+//get user tweets
+const fetchUserTweets = async (userId, tweetsContainerId) => {
+    console.log("btn clicked amd Request sent")
+    const response = await fetch('http://localhost:3007/get_user_timeline', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    body: JSON.stringify({ userId }),
+    });
 
-// const targetNode = document.getElementById(postList);
+    if (response.ok) {
+      const data = await response.json();
+        const tweetsContainer = document.getElementById(tweetsContainerId);
+      
+      data.tweets.data.forEach(tweet => {
+        getLLMLabel(tweet.text)
+        .then((foundText)=>{
+            const tweetDiv = document.createElement('div');
+            tweetDiv.className = 'tweet';
+            tweetDiv.textContent = tweet.text;
+            tweetsContainer.appendChild(tweetDiv);
+        })
+      });
+    } else {
+      console.error('Error fetching tweets:', response.statusText);
+    }
+}
+
 const config = {
     attributes: true,
     childList: true,
@@ -351,8 +406,9 @@ const config = {
 setTimeout(()=>{
     console.log("Started ")
     var start = Date.now();
-    // const targetNode = postList();
     const targetNode = TwitterHTMLParser(document.body.innerHTML);
+    console.log("Document found", document.body.innerHTML)
+    // checkAvatarHover()
     console.log("Target node: ", targetNode)
     // console.log("Target node children: ", targetNode.childNodes)
     console.log("Target node child list: ", targetNode.childList)
@@ -360,44 +416,69 @@ setTimeout(()=>{
     if (targetNode){
         console.log("Target node found")
         const observer = new MutationObserver((mutations) => {
-            console.log("Started mutation observer!")
+            console.log("Entered mutation observer!")
             for (const mutation of mutations) {
                 if (mutation.type === 'childList') {
                     if (mutation.addedNodes.length > 0){
                         console.log('A child node has been added or removed.');
-                        setTimeout(() => {
-                            console.log("Mutation observer called")
+                        console.log("Mutation added nodes: ", mutation.addedNodes)
+                        // setTimeout(() => {
+                        //     console.log("Mutation observer called agan")
                             
-                            const newList = TwitterHTMLParser(document.body.innerHTML);
-                            console.log("New list child nodes: ", newList.childNodes)
-                        }, 3000)
+                        //     const newList = TwitterHTMLParser(document.body.innerHTML);
+                        //     console.log("New list child nodes: ", newList.childNodes)
+                        // }, 3000)
                     }
                 }
-                //added sept23
-                mutation.addedNodes.forEach((node)=>{
-                    if (node.nodeType===1){
-                        const avatarDiv = node.querySelector('div[data-testid="Tweet-User-Avatar"]');
-                        if (avatarDiv) {
-                            console.log('Avatar found in newly added node:', avatarDiv);
+                else if (mutation.type === 'attributes') {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const targetElement = document.querySelector('a[aria-hidden="true"]');
+                        if (targetElement){
+                            // const backgroundColor = targetElement.style.backgroundColor;
+                            // console.log("Style changed! New background-color:", backgroundColor);
+                            console.log("Target element: ", targetElement)
+                            const baseURL = 'https://x.com/'
+                            const href = targetElement.href.substring(baseURL.length)
+                            console.log("Href", href)
+                            setTimeout(() => {
+                                if (true) {
+                                    console.log("Hovered detected. Inserting custom div.");
+                                    console.log("Target element classlist: ", targetElement.classList)
+                                    if (!targetElement.classList.contains('hovered')) {
+                                        insertCustomDivNextToElement(targetElement)
+                                        targetElement.classList.add('hovered');
+                                        fetchUserTweets(href, 'tweets-container');
+
+
+                                        targetElement.addEventListener('mouseout', (event)=>{
+                                            console.log("Mouse out")
+                                            removeCustomDiv();
+                                        })
+                                    }
+                                } 
+                            }, 500)
                         }
+                        
                     }
-                })
-                
-                // } else if (mutation.type === 'attributes') {
-                //     console.log(`The ${mutation.attributes} attribute was modified.`);
-                // }
-                // else if (mutation.type === "characterData"){
-                //     console.log("Character data changed")
-                // }
+
+                }
+                //added sept23
+                // mutation.addedNodes.forEach((node)=>{
+                //     if (node.nodeType===1){
+                //         const avatarDiv = node.querySelector('div[data-testid="Tweet-User-Avatar"]');
+                //         if (avatarDiv) {
+                //             console.log('Avatar found in newly added node:', avatarDiv);
+                //             avatarDiv.addEventListener('mouseover', (event)=>{
+                //                 console.log("Avatar hovered", event)
+                //             })
+                //         }
+                //     }
+                // })
             }
         });
-        console.log("Above mutation observer")
+        // console.log("Above mutation observer")
         observer.observe(targetNode, config);   
     }
 
 }, 4000)
 console.log("Started observer")
-
-
-
-// send message to background containing scroll position; if scroll > 50%, reinject content script. also first injection should wait 2ms
