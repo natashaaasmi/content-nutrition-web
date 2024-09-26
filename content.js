@@ -369,7 +369,6 @@ function removeCustomDiv() {
 
 //get user tweets
 const fetchUserTweets = async (userId, tweetsContainerId) => {
-    console.log("btn clicked amd Request sent")
     const response = await fetch('http://localhost:3007/get_user_timeline', {
       method: 'POST',
       headers: {
@@ -447,7 +446,7 @@ setTimeout(()=>{
                                     if (!targetElement.classList.contains('hovered')) {
                                         insertCustomDivNextToElement(targetElement)
                                         targetElement.classList.add('hovered');
-                                        fetchUserTweets(href, 'tweets-container');
+                                        // fetchUserTweets(href, 'tweets-container');
 
 
                                         targetElement.addEventListener('mouseout', (event)=>{
