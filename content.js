@@ -117,6 +117,26 @@ async function getLLMLabel(tweet){
         return ("Error found")
     }
 }
+async function classifyTweetList(tweets){
+    try {
+        console.log("Entered classifytwets content")
+        if (tweets){
+            console.log("Tweets exist")
+            const response = await sendMessageToBackground({ message: "classify", input: tweets });
+            if (response.message === "Tweets classified"){
+                console.log("Tweets classified from background", response.result)
+                // const percentageArray = JSON.parse(response.result)
+                // console.log("Percentage array: ", percentageArray)
+                return response.result
+            }
+            return true;
+        }
+    }
+    catch (error){
+        console.log("Error classifying tweets: ", error)
+        return ("Error found")
+    }
+}
 
 // functions for parsing tweet base
 function getTweet(post){
@@ -299,6 +319,7 @@ function injectNewElement(el, textInput){
         newElement.style.paddingRight='12px';
         newElement.style.textAlign='center';
         newElement.style.margin='5px';
+        // newElement.style.marginLeft='14px';
         newElement.style.fontFamily='Arial';
         // console.log("Text found? ")
         
@@ -319,11 +340,13 @@ function insertCustomDivNextToElement(targetElement) {
     var customDiv = document.createElement("div");
     customDiv.style.backgroundColor = "black";
     customDiv.style.border = "1px solid lightgray";
-    customDiv.style.height = "100px";
+    customDiv.style.height = "300px";
     customDiv.style.width = "200px";
     customDiv.style.borderRadius = "10px";
     customDiv.style.position = "absolute";
-    customDiv.style.innerHTML = "Loading nutrition facts for this user";
+    customDiv.style.marginLeft="200px";
+    customDiv.color = "white";
+    customDiv.style.innerHTML = "Loading nutrition facts...";
     customDiv.id="tweets-container";
 
     var deleteDiv = document.createElement("div")
@@ -349,6 +372,14 @@ function insertCustomDivNextToElement(targetElement) {
     titleText.style.textAlign = "center"
     titleText.style.padding = "10px"
     titleText.style.fontFamily = "Arial"
+    var innerdiv = document.createElement("div")
+    // innerdiv.style.height = "100%"
+    // innerdiv.innerHTML = "Loading nutrition facts..."
+    innerdiv.style.color = "white"
+    innerdiv.style.textAlign = "center"
+    innerdiv.style.fontFamily = "Arial"
+    innerdiv.style.padding = "10px"
+    customDiv.appendChild(innerdiv)
     customDiv.appendChild(deleteDiv)
     customDiv.appendChild(titleText)
 
@@ -369,27 +400,67 @@ function removeCustomDiv() {
 
 //get user tweets
 const fetchUserTweets = async (userId, tweetsContainerId) => {
-    const response = await fetch('http://localhost:3007/get_user_timeline', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    body: JSON.stringify({ userId }),
-    });
+    //uncommend when rate limit over
+    // const response = await fetch('http://localhost:3007/get_user_timeline', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    // body: JSON.stringify({ userId }),
+    // });
 
-    if (response.ok) {
-      const data = await response.json();
+    // if (response.ok) {
+    if (true){
+    //   const data = await response.json(); //uncomment ths later
         const tweetsContainer = document.getElementById(tweetsContainerId);
-      
-      data.tweets.data.forEach(tweet => {
-        getLLMLabel(tweet.text)
-        .then((foundText)=>{
-            const tweetDiv = document.createElement('div');
-            tweetDiv.className = 'tweet';
-            tweetDiv.textContent = tweet.text;
-            tweetsContainer.appendChild(tweetDiv);
+        // classifyTweetList(data.tweets.data)
+        classifyTweetList(["tweet1", "tweet2", "tweet3", "tweet4", "tweet5"])
+        .then((res)=>{
+            console.log("Classified tweets from HERE: ", res)
+            res.map((classifier)=>{
+                const colorMap = ["crimson", "slategray", "seagreen", "darkgreen", "chocolate", "cornflowerblue", "darkblue", "blueviolet"]
+                console.log("classified item: ", classifier)
+                var newListItem = document.createElement('div');   
+                newListItem.style.backgroundColor = colorMap[Math.floor(Math.random() * colorMap.length)];
+                newListItem.style.borderRadius = "20px";
+                newListItem.style.padding = "5px";
+                newListItem.style.paddingLeft = "12px";
+                
+                newListItem.style.margin = "10px";
+                newListItem.style.color = "white";
+                newListItem.style.fontFamily = "Arial";
+                var flexDiv = document.createElement('div');
+                flexDiv.style.display = "flex";
+                flexDiv.style.justifyContent = "space-between";
+                var labelDiv = document.createElement('div');
+                labelDiv.innerHTML = classifier.label;
+                var percentageDiv = document.createElement('div');
+                
+                const percentage = parseFloat(classifier.percent)
+                if (!isNaN(percentage)) {
+                    percentageDiv.innerHTML = `${(percentage * 100).toFixed(1)}%`;
+                } else {
+                    percentageDiv.innerHTML = 'Invalid percentage value';
+                }
+                
+                // newListItem.innerHTML = classifier.label;
+                flexDiv.appendChild(labelDiv);
+                flexDiv.appendChild(percentageDiv);
+                newListItem.appendChild(flexDiv);
+                tweetsContainer.appendChild(newListItem);
+            })
+            // for (let i = 0; i < res.length; i)
         })
-      });
+      //for 10 tweets, classify them and put percentage of each label 
+    //   data.tweets.data.forEach(tweet => {
+    //     getLLMLabel(tweet.text)
+    //     .then((foundText)=>{
+    //         const tweetDiv = document.createElement('div');
+    //         tweetDiv.className = 'tweet';
+    //         tweetDiv.textContent = tweet.text;
+    //         tweetsContainer.appendChild(tweetDiv);
+    //     })
+    //   });
     } else {
       console.error('Error fetching tweets:', response.statusText);
     }
@@ -439,23 +510,26 @@ setTimeout(()=>{
                             const baseURL = 'https://x.com/'
                             const href = targetElement.href.substring(baseURL.length)
                             console.log("Href", href)
-                            setTimeout(() => {
-                                if (true) {
-                                    console.log("Hovered detected. Inserting custom div.");
-                                    console.log("Target element classlist: ", targetElement.classList)
-                                    if (!targetElement.classList.contains('hovered')) {
-                                        insertCustomDivNextToElement(targetElement)
+                            if (targetElement) {
+                                const baseURL = 'https://x.com/';
+                                const href = targetElement.href.substring(baseURL.length);
+                                
+                                console.log("Href", href);
+                                if (!targetElement.classList.contains('hovered')) {
+                                    // setTimeout(() => {
+                                        console.log("Hovered detected. Inserting custom div.");
+                                        insertCustomDivNextToElement(targetElement);
                                         targetElement.classList.add('hovered');
-                                        // fetchUserTweets(href, 'tweets-container');
-
-
-                                        targetElement.addEventListener('mouseout', (event)=>{
-                                            console.log("Mouse out")
+                                        fetchUserTweets(href,'tweets-container')
+                        
+                                        targetElement.addEventListener('mouseout', (event) => {
+                                            console.log("Mouse out");
                                             removeCustomDiv();
-                                        })
-                                    }
-                                } 
-                            }, 500)
+                                            targetElement.classList.remove('hovered');  // Remove the class to allow re-triggering if necessary
+                                        });
+                                    // }, 500);
+                                }
+                            }
                         }
                         
                     }

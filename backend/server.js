@@ -75,6 +75,7 @@ app.post('/get_user_timeline', async (req, res)=>{
     const userResponse = await readOnlyClient.v2.userByUsername(userId);  
     const id = userResponse.data.id;
     const tweets = await readOnlyClient.v2.userTimeline(`${id}`, { exclude: 'replies' });
+    const tweetData = tweets.data.data;
     // console.log("First page", tweets.data)
    
     // console.log("First page data tweets", tweets.data.data);
