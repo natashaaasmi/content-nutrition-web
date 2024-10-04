@@ -339,49 +339,127 @@ function insertCustomDivNextToElement(targetElement) {
 
     var customDiv = document.createElement("div");
     customDiv.style.backgroundColor = "black";
-    customDiv.style.border = "1px solid lightgray";
+    // customDiv.style.border = "1px solid lightgray";
     customDiv.style.height = "300px";
     customDiv.style.width = "200px";
-    customDiv.style.borderRadius = "10px";
+    customDiv.style.boxShadow="0px 0px 10px 0px rgba(255, 255, 255, 0.275)";
+    customDiv.style.borderRadius = "20px";
     customDiv.style.position = "absolute";
     customDiv.style.marginLeft="200px";
     customDiv.color = "white";
     customDiv.style.innerHTML = "Loading nutrition facts...";
     customDiv.id="tweets-container";
+    customDiv.className="custom-div"
+
+    var flexTopDiv = document.createElement('div')
+    flexTopDiv.style.display = 'flex'
+    flexTopDiv.style.justifyContent = 'space-between'
+    flexTopDiv.style.position = 'relative'
+    flexTopDiv.style.paddingLeft = '10px'
+    flexTopDiv.style.paddingRight = '10px'
+    flexTopDiv.style.alignItems = 'center';
+    flexTopDiv.style.marginTop = "20px";
+    // flexTopDiv.style.position = 'absolute'
+    // flexTopDiv.style.top = '12px'
+    // flexTopDiv.style.left = '0';  
+    // flexTopDiv.style.right = '0';
+    flexTopDiv.style.marginBottom = '15px'
+    flexTopDiv.style.flexDirection = 'row'
 
     var deleteDiv = document.createElement("div")
+    // deleteDiv.style.position = "absolute"
+    // deleteDiv.style.right = "10px";
+    // deleteDiv.style.top = '12px';
     deleteDiv.innerHTML = "x"
-    deleteDiv.style.color = "white"
-    deleteDiv.style.position = "absolute"
-    deleteDiv.style.top = "6px"
-    deleteDiv.style.right = "6px"
+    deleteDiv.style.fontFamily = "monospace, monospace";
+    deleteDiv.style.color = "lightgray"
     deleteDiv.style.fontSize="11px"
-    deleteDiv.style.fontFamily = "Arial"
+    deleteDiv.style.marginTop = "-10px"
+    deleteDiv.style.marginRight = "10px"
     deleteDiv.style.cursor = "pointer"
     deleteDiv.addEventListener('click', (event)=>{
-        console.log("Delete div clicked")
+        // console.log("Delete div clicked")
         removeCustomDiv();
     })
     
-    customDiv.className="custom-div"
     var titleText = document.createElement("div")
-    
-    titleText.innerHTML = "Content nutrition"
-    titleText.style.fontWidth = "bold"
-    titleText.style.color = "white"
-    titleText.style.textAlign = "center"
-    titleText.style.padding = "10px"
-    titleText.style.fontFamily = "Arial"
+    titleText.innerHTML = "Content nutrition report"
+    titleText.style.fontFamily = "Helvetica, sans-serif"
+    titleText.style.color = "#72767B"
+    // titleText.style.textAlign = "left"
+    titleText.style.marginLeft = "10px"
+    titleText.style.fontSize="13px"
+    titleText.style.fontFamily = "Helvetica, sans-serif"
+
+    flexTopDiv.appendChild(titleText)
+    flexTopDiv.appendChild(deleteDiv)
+
     var innerdiv = document.createElement("div")
     // innerdiv.style.height = "100%"
     // innerdiv.innerHTML = "Loading nutrition facts..."
-    innerdiv.style.color = "white"
+    innerdiv.style.position = "relative"
+    // innerdiv.style.color = "lightgray"
     innerdiv.style.textAlign = "center"
-    innerdiv.style.fontFamily = "Arial"
+    innerdiv.style.fontFamily = "Helvetica, sans-serif"
+    innerdiv.marginTop = "10px";
+    
+    innerdiv.style.fontSize = "14px"
     innerdiv.style.padding = "10px"
+    
+    var loader = document.createElement("div")
+    var style = document.createElement('style');
+    style.innerHTML = `
+    @keyframes pulse {
+        0% {
+        opacity: 0.5;
+        }
+        50% {
+        opacity: .8;
+        }
+        100% {
+        opacity: 0.5;
+        }
+    }
+    `;
+    loader.style.animation = "pulse 2s infinite"
+    loader.id = "loaderInnerDiv"
+    var innerDivRectangle = document.createElement("div")
+    innerDivRectangle.style.borderRadius = "20px"
+    innerDivRectangle.style.backgroundColor = "gray"
+    innerDivRectangle.style.height= "22px";
+    innerDivRectangle.style.width = "150px";
+    innerDivRectangle.style.margin = "10px";
+
+    var innerDivRectangle2 = document.createElement("div")
+    innerDivRectangle2.style.borderRadius = "20px"
+    innerDivRectangle2.style.backgroundColor = "gray"
+    innerDivRectangle2.style.height= "22px";
+    innerDivRectangle2.style.width = "150px";
+    innerDivRectangle2.style.margin = "10px";
+    innerDivRectangle2.style.marginTop = "9px";
+    var innerDivRectangle3 = document.createElement("div")
+    innerDivRectangle3.style.borderRadius = "20px"
+    innerDivRectangle3.style.backgroundColor = "gray"
+    innerDivRectangle3.style.height= "22px";
+    innerDivRectangle3.style.width = "120px";
+    innerDivRectangle3.style.margin = "10px";
+    innerDivRectangle3.style.marginTop = "9px";
+
+
+    document.head.appendChild(style);
+    // innerdiv.style.fontWeight = "900"
+    // innerdiv.style.fontSize = "20px"
+    
+    customDiv.appendChild(flexTopDiv)
+    
+    loader.appendChild(innerDivRectangle)
+    loader.appendChild(innerDivRectangle2)
+    loader.appendChild(innerDivRectangle3)
+    innerdiv.appendChild(loader)
     customDiv.appendChild(innerdiv)
-    customDiv.appendChild(deleteDiv)
-    customDiv.appendChild(titleText)
+    
+    // customDiv.appendChild(deleteDiv)
+    // customDiv.appendChild(titleText)
 
     const rect = targetElement.getBoundingClientRect();
     customDiv.style.top = `${rect.top + window.scrollY + 40 }px`; 
